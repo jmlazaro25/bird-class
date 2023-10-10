@@ -203,11 +203,12 @@ def objective(params):
     trials_file_connection = open(trials_file, 'a')
     writer = csv.writer(trials_file_connection)
     writer.writerow([
-        loss, params,
-        iteration, epochs,
+        loss,
+        params, iteration,
         accuracy, val_accuracy,
         f1_score, val_f1_score,
-        run_time])
+        epochs, run_time
+    ])
     trials_file_connection.close()
 
     return {'loss': loss,

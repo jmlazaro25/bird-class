@@ -24,8 +24,7 @@ CHECKPOINTS_DIR = os.path.join(BASE_DIR, 'checkpoints')
 os.makedirs(CHECKPOINTS_DIR, exist_ok=True)
 
 space = {
-    'optim': hp.choice('optim', ['sgd', 'adam', 'adamw']),
-    'init_lr': hp.loguniform('init_lr', -4, -1),
+    'optim': hp.choice('optim', ['sgd', 'adamw']),
     'dropout': hp.uniform('dropout', 0.3, 0.6),
 }
 
@@ -39,7 +38,7 @@ def main():
     # Data
     make_data_mod_uni(25, refresh=False)
 
-    batch_size = 128
+    batch_size = 256
     global dataset_mod_train, dataset_valid
     dataset_mod_train = tf.keras.utils.image_dataset_from_directory(
         DATA_MOD_DIR,
@@ -77,7 +76,7 @@ def main():
     fn=objective,
         space=space,
         algo=tpe.suggest,
-        trials=trials, 
+        trials=trials,
         max_evals=args.max_evals
     )
 
@@ -96,16 +95,19 @@ def make_data_mod_uni(files_per_class, refresh):
 
     if os.path.exists(DATA_MOD_DIR):
         rmtree(DATA_MOD_DIR)
-    
+
     for name in get_classes().values():
         os.makedirs(os.path.join(DATA_MOD_DIR, name))
         files_to_copy = glob(os.path.join(DATA_DIR, 'train', name, '*'))
         files_to_copy = sample(files_to_copy, min(files_per_class, len(files_to_copy)))
         for f in files_to_copy:
             copy(f, os.path.join(DATA_MOD_DIR, name))
-    return            
+    return
 
 def objective(params):
+
+    print(params)
+
     global iteration
     iteration += 1
 
@@ -117,11 +119,10 @@ def objective(params):
         )
     )
     optims = {
-        'sgd': tf.keras.optimizers.SGD,
-        'adam': tf.keras.optimizers.Adam,
-        'adamw': tf.keras.optimizers.AdamW
+        'sgd': tf.keras.optimizers.SGD(0.3),
+        'adamw': tf.keras.optimizers.AdamW(0.0001)
     }
-    optim = optims[params['optim']](params['init_lr'])
+    optim = optims[params['optim']]
     dropout = params['dropout']
 
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -131,12 +132,20 @@ def objective(params):
     )
 
     early_stopping = tf.keras.callbacks.EarlyStopping(
-        monitor = "val_loss",
-        patience = 5,
-        restore_best_weights = True
+        monitor="val_loss",
+        min_delta=0.005,
+        patience=3,
+        restore_best_weights=True
     )
 
-    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=1e-6)
+    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.2,
+        min_delta=0.001,
+        patience=1,
+        cooldown=2,
+        min_lr=1e-6
+    )
 
     augment = tf.keras.Sequential([
         tf.keras.layers.experimental.preprocessing.Rescaling(1./255),
@@ -156,7 +165,7 @@ def objective(params):
 
     inputs = pretrained_model.input
     x = augment(inputs)
-    
+
     x = tf.keras.layers.Dense(128, activation='relu')(pretrained_model.output)
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.Dense(256, activation='relu')(x)
@@ -173,7 +182,7 @@ def objective(params):
             'accuracy',
             tf.keras.metrics.F1Score(
                 average='weighted', threshold=None, name='f1_score', dtype=None
-            )        
+            )
         ]
     )
 

@@ -32,7 +32,6 @@ space = {
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('trials_file')
     parser.add_argument('-n', dest='max_evals', type=int, default=100)
     args = parser.parse_args()
 
@@ -210,13 +209,17 @@ def objective(params):
                 'f1_score': f1_score, 'val_f1_score': val_f1_score,
                 'epochs': epochs,
                 'train_time': run_time,
+                'lr': [
+                    str(lr) for lr in train_history.history['lr']
+                ]
             },
-            f
+            f,
+            indent=4
         )
 
-    #tf.keras.backend.clear_session()
-    #del model
-    #collect()
+    tf.keras.backend.clear_session()
+    del model
+    collect()
 
     return {'params': params,'iteration': iteration,
             'loss': loss[-1], 'losses': loss, 'val_loss': val_loss,

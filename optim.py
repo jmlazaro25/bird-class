@@ -1,6 +1,7 @@
 import os
-import csv
 from glob import glob
+from json import dump
+from gc import collect
 from random import sample
 from shutil import rmtree, copy
 from argparse import ArgumentParser
@@ -11,7 +12,7 @@ from hyperopt import Trials
 from hyperopt import fmin
 from hyperopt import hp
 from hyperopt import STATUS_OK
-from timeit import default_timer as timer
+from timeit import default_timer
 
 RAW_IMAGE_HEIGHT = 224
 RAW_IMAGE_WIDTH = 224
@@ -31,14 +32,13 @@ space = {
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('trials_file')
     parser.add_argument('-n', dest='max_evals', type=int, default=100)
     args = parser.parse_args()
 
     # Data
     make_data_mod_uni(25, refresh=False)
 
-    batch_size = 256
+    batch_size = 512
     global dataset_mod_train, dataset_valid
     dataset_mod_train = tf.keras.utils.image_dataset_from_directory(
         DATA_MOD_DIR,
@@ -46,6 +46,9 @@ def main():
         label_mode='categorical',
         image_size=(RAW_IMAGE_HEIGHT, RAW_IMAGE_WIDTH),
         crop_to_aspect_ratio=True,
+        #validation_split=0.95, #del
+        #seed=1, #del
+        #subset='training' #del
     )
     dataset_valid = tf.keras.utils.image_dataset_from_directory(
         os.path.join(DATA_DIR, 'valid'),
@@ -54,20 +57,6 @@ def main():
         image_size=(RAW_IMAGE_HEIGHT, RAW_IMAGE_WIDTH),
         crop_to_aspect_ratio=True
     )
-
-    # Optim
-    global trials_file
-    trials_file = os.path.join(CHECKPOINTS_DIR, args.trials_file)
-    trials_file_connection = open(trials_file, 'w')
-    writer = csv.writer(trials_file_connection)
-    writer.writerow([
-        'loss',
-        'params', 'iteration',
-        'accuracy', 'val_accuracy',
-        'f1_score', 'val_f1_score',
-        'epochs', 'train_time'
-    ])
-    trials_file_connection.close()
 
     global iteration
     iteration = 0
@@ -118,6 +107,7 @@ def objective(params):
             + '__'.join(f'{k}-{v}' for k, v in params.items())
         )
     )
+
     optims = {
         'sgd': tf.keras.optimizers.SGD(0.3),
         'adamw': tf.keras.optimizers.AdamW(0.0001)
@@ -134,7 +124,7 @@ def objective(params):
     early_stopping = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss",
         min_delta=0.005,
-        patience=3,
+        patience=5,
         restore_best_weights=True
     )
 
@@ -142,7 +132,7 @@ def objective(params):
         monitor='val_loss',
         factor=0.2,
         min_delta=0.001,
-        patience=1,
+        patience=2,
         cooldown=2,
         min_lr=1e-6
     )
@@ -187,7 +177,7 @@ def objective(params):
     )
 
     global dataset_mod_train, dataset_valid
-    start = timer()
+    start = default_timer()
     train_history = model.fit(
         dataset_mod_train,
         steps_per_epoch=len(dataset_mod_train),
@@ -200,33 +190,39 @@ def objective(params):
             reduce_lr
         ]
     )
-    run_time = timer() - start
-    loss = train_history.history['val_loss'][-1]
+    run_time = default_timer() - start
+    loss = train_history.history['loss']
+    val_loss = train_history.history['val_loss']
     accuracy = train_history.history['accuracy']
     val_accuracy = train_history.history['val_accuracy']
     f1_score = train_history.history['f1_score']
     val_f1_score = train_history.history['val_f1_score']
     epochs = len(train_history.history['val_loss'])
 
-    global trials_file
-    trials_file_connection = open(trials_file, 'a')
-    writer = csv.writer(trials_file_connection)
-    writer.writerow([
-        loss,
-        params, iteration,
-        accuracy, val_accuracy,
-        f1_score, val_f1_score,
-        epochs, run_time
-    ])
-    trials_file_connection.close()
+    json_path = os.path.join(checkpoint_path, 'history.json')
+    with open(json_path, 'w') as f:
+        dump(
+            {
+                'params': params,'iteration': iteration,
+                'loss': loss, 'val_loss': val_loss,
+                'accuracy': accuracy, 'val_accuracy': val_accuracy,
+                'f1_score': f1_score, 'val_f1_score': val_f1_score,
+                'epochs': epochs,
+                'train_time': run_time,
+                'lr': [
+                    str(lr) for lr in train_history.history['lr']
+                ]
+            },
+            f,
+            indent=4
+        )
 
-    return {'loss': loss,
-            'params': params,'iteration': iteration,
-            'accuracy': accuracy, 'val_accuracy': val_accuracy,
-            'f1_score': f1_score, 'val_f1_score': val_f1_score,
-            'epochs': epochs,
-            'history': train_history,
-            'train_time': run_time, 'status': STATUS_OK}
+    tf.keras.backend.clear_session()
+    del model
+    collect()
+
+    return {'loss': loss[-1],
+            'status': STATUS_OK}
 
 if __name__ == '__main__':
     trials = main()

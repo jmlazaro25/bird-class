@@ -20,7 +20,18 @@ def st_model():
     """)
 
 def st_deployment():
-    ...
+    st.subheader('Deployment')
+    st.markdown("""
+        Once I had a model I was content with, I deployed it as follows:
+        1. I nade an API for the model with FastAPI.
+        2. I containerized the model, its API, and their minimal environment
+           with Docker, and pushed the image to Dockerhub.
+        3. I made this frontend with Streamlit, containerized it, and pushed
+           it to Dockerhub.
+        4. I configured an AWS EC2 instance to make this Streamlit app, which
+           has access the the model API via a Docker network, to be accesible
+           to select IPs.
+    """)
 
 def run():
     st.header('Introduction')
@@ -36,11 +47,14 @@ def run():
         ' | <a href="https://github.com/jmlazaro25"><img src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" alt="text" width="30rem"></a>',
          unsafe_allow_html=True,
     )
+
+    st.divider()
     st.markdown(
         '#### 1. [Model](#model)\n'
         '#### 2. [Deployment ](#deployment)\n',
         unsafe_allow_html=True
     )
+    st.divider()
 
     st_model()
     st_deployment()

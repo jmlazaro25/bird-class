@@ -1,12 +1,15 @@
 from requests import post as requests_post
+import os
 
 from requests.models import Response
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 
+BMAPI_URL = os.environ['BMAPI_URL']
+
 def request_prediction(image_file: UploadedFile) -> Response:
     return requests_post(
-        'http://localhost:8000/predict-image',
+        f'{BMAPI_URL}/predict-image',
         files={'file': (image_file.name, image_file.read(), image_file.type)}
     )
 

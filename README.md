@@ -25,6 +25,10 @@ As shown in `ds_model_ltd.ipynb`, it was unable to make any meaningful predictio
 Note that the size of this model is 24.37 MB (6,387,293 parameters).
 
 #### Deployment
-Finally, I used FastAPI to make an API for the model and Docker to containersize it.
-Currently it has one endpoint that returns the name of the bird species and the probability for the 3 most likely classes.\
-The image is here: [https://hub.docker.com/repository/docker/jmlazaro25/bmapi/general](https://hub.docker.com/repository/docker/jmlazaro25/bmapi/general).
+Once I had a model I was content with, I deployed it as follows:
+  1. I made an API for the model with FastAPI.
+  2. I containerized the model, its API, and their minimal environment with Docker, and pushed the image to Dockerhub.
+  3. I made a frontend with Streamlit, containerized it, and pushed it to Dockerhub.
+  4. I ran both containers using Docker compose on an AWS EC2 instance and configured it to accept and forward HTTP requests to the Streamlit app.
+
+[Youtube Demo](https://youtu.be/qIFdCHsppTo)

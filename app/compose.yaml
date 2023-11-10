@@ -1,10 +1,10 @@
 services:
   bmapi:
-    image: bmapi:1.0
+    image: jmlazaro25/bmapi:1.0
     ports:
       - 8000:8000
   bmapp:
-    image: bmapp:1.0
+    image: jmlazaro25/bmapp:1.1
     depends_on:
       - bmapi
     ports:

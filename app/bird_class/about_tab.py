@@ -7,8 +7,7 @@ def st_model():
         At the core of this project is an Tensorflow image-classification
         neural network based on the EfficientNetB0 architecture, trained on a
         subset of the
-        [100-bird-species dataset](https://www.kaggle.com/datasets/gpiosenka/100-bird-species)
-        (actually contains 525 species).
+        [BIRDS 525 SPECIES - IMAGE CLASSIFICATION dataset](https://www.kaggle.com/datasets/gpiosenka/100-bird-species)
 
         Rather than scale the training dataset up to balance the dataset,
         I only took 25 images per species. This allowed me to train several
@@ -23,14 +22,14 @@ def st_deployment():
     st.subheader('Deployment')
     st.markdown("""
         Once I had a model I was content with, I deployed it as follows:
-        1. I nade an API for the model with FastAPI.
+        1. I made an API for the model with FastAPI.
         2. I containerized the model, its API, and their minimal environment
            with Docker, and pushed the image to Dockerhub.
         3. I made this frontend with Streamlit, containerized it, and pushed
            it to Dockerhub.
-        4. I configured an AWS EC2 instance to make this Streamlit app, which
-           has access the the model API via a Docker network, to be accesible
-           to select IPs.
+        4. I ran both containers using Docker compose on an AWS EC2 instance
+           and configured it to accept and forward HTTP requests to the
+           Streamlit app.
     """)
 
 def run():

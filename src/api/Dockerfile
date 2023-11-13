@@ -2,10 +2,10 @@ FROM python:3.11.6-slim
 
 WORKDIR /code
 
-COPY ./requirments_api.txt /code/requirments_api.txt
+COPY ./requirments.txt /code/requirments.txt
 
 RUN pip install --upgrade pip; \
-    pip install -r requirments_api.txt;
+    pip install -r requirments.txt;
 
 
 COPY ./model /code/model

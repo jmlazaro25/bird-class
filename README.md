@@ -2,6 +2,10 @@
 #### An excersise in the development/optimization and deployment of a large machine learning model.
 The dataset is at [https://www.kaggle.com/datasets/gpiosenka/100-bird-species](https://www.kaggle.com/datasets/gpiosenka/100-bird-species).
 
+#### Recorded Demo
+[![Bird Class Web App Demo](https://img.youtube.com/vi/qIFdCHsppTo/0.jpg)](https://www.youtube.com/watch?v=qIFdCHsppTo)
+
+
 #### Development
 In this project, we use transfer learning, starting from the EfficientNetB0 architecture to classify bird images.
 This could have applications in conservation efforts for endangered or threatend species.

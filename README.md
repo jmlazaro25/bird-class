@@ -34,5 +34,3 @@ Once I had a model I was content with, I deployed it as follows:
   2. I containerized the model, its API, and their minimal environment with Docker, and pushed the image to Dockerhub.
   3. I made a frontend with Streamlit, containerized it, and pushed it to Dockerhub.
   4. I ran both containers using Docker compose on an AWS EC2 instance and configured it to accept and forward HTTP requests to the Streamlit app.
-
-[Youtube Demo](https://youtu.be/qIFdCHsppTo)
